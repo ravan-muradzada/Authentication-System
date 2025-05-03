@@ -30,7 +30,7 @@ export const signUp = async (req, res) => {
         // Saving password
         const hashedPassword = await bcrypt.hash(password, 8);
         const passwordKey = `password:${email}`;
-        await redis.setEx(passwordKey, 300, hashedPassword);
+        await redis.set(passwordKey, hashedPassword, {EX: 300 });
 
         // Sending response
         res.status(200).json({
@@ -58,7 +58,7 @@ export const verifyOtp = async (req, res) => {
         if (!allOtps.includes(inputOtp)) {
             return res.status(404).json({
                 success: false,
-                message: 'OTP code not found!'
+                message: 'OTP not found!'
             });
         }
         
@@ -205,10 +205,12 @@ export const loginManual = async (req, res) => {
             });
         }
 
+        
         // Generating and saving OTP
         const otpCode = otpGenerator.generate();
         console.log('OTP Code: ', otpCode);
         const otpKey = `otp:${email}`;
+        await redis.set(`userId:${email}`, user.id, { EX: 300 });
         await redis.lPush(otpKey, otpCode);
         await redis.expire(otpKey, 300); // Set expiration time to 5 minutes
 
@@ -234,6 +236,35 @@ export const loginManual = async (req, res) => {
 export const verifyLogIn = async (req, res) => {
     try {
         const { email, inputOtp } = req.body;
+        const otpKey = `otp:${email}`;
+        const allOtps = await redis.lRange(otpKey, 0, -1);
+
+        const checkExistenceOfOtp = allOtps.includes(inputOtp);
+
+        if (!checkExistenceOfOtp) {
+            return res.status(404).json({
+                success: false,
+                message: 'OTP not found!'
+            });
+        }
+        await redis.del(otpKey);
+        
+        const userId = await redis.get(`userId:${email}`);
+        await redis.del(`userId:${email}`);
+
+        const { accessToken, refreshToken } = await handleTokens.generateToken(userId);
+
+        res.cookie('refreshToken', refreshToken, {
+            maxAge: 7 * 24 * 60 * 60,
+            sameSite: 'strict',
+            httpOnly: true
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Successfully logged in!',
+            accessToken
+        });
     } catch(e) {
         res.status(400).json({
             success: false,

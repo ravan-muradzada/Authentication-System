@@ -25,7 +25,8 @@ router.get('/auth/google/callback',
 router.get('/login-failed', authController.loginFailed);
 
 // Log in manual
-router.post('/login', authLimit, authController.loginManual);
+router.post('/login', authLimit, validateRequestMiddleware, authController.loginManual);
+router.post('/verify-login', authLimit, validateRequestMiddleware, authController.verifyLogIn);
 
 // Refresh the tokens
 router.post('/refresh', authController.refresh);
