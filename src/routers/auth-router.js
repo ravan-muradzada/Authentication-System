@@ -6,7 +6,16 @@ import authLimit from '../middlewares/rateLimit.js';
 
 const router = new express.Router();
 
-const jwtMiddleware = passport.authenticate('jwt', { session: false });
+const jwtMiddleware = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err || !user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    req.user = user;
+    next();
+  })(req, res, next);
+};
+
 
 // OTP sign up
 router.post('/sign-up', authLimit, validateRequestMiddleware, authController.signUp);

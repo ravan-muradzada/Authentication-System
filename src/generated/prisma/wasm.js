@@ -131,14 +131,6 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.TaskScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  completed: 'completed',
-  ownerId: 'ownerId'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -156,8 +148,7 @@ exports.Prisma.NullsOrder = {
 
 
 exports.Prisma.ModelName = {
-  User: 'User',
-  Task: 'Task'
+  User: 'User'
 };
 
 /**

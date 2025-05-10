@@ -2,9 +2,9 @@ import * as msgSender from '../utils/msg-sender.js';
 import otpGenerator from 'otp-generator';
 import jwt from 'jsonwebtoken';
 import * as handleTokens from '../utils/handle-tokens.js'
-import redis from '../utils/redis-client.js';
+import redis from '../config/redis-client.js';
 import bcrypt from 'bcrypt';
-import prisma from '../utils/db.js';
+import prisma from '../config/db.js';
 import crypto from 'crypto';
 
 // Manual sign up
@@ -94,6 +94,7 @@ export const verifyOtp = async (req, res) => {
             redirect: '/add-other-credentials'
         })
     } catch(e) {
+        console.log(e.message);
         res.status(400).json({
             success: false,
             message: `Error happened while verifying OTP: ${e.message}`
@@ -266,6 +267,7 @@ export const verifyLogIn = async (req, res) => {
             accessToken
         });
     } catch(e) {
+        console.log(e.message);
         res.status(400).json({
             success: false,
             message: `Error happened while verifying log in! ${e.message}`

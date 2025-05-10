@@ -7,8 +7,12 @@
   "scripts": {
     "start": "env-cmd -f ./.env node src/server",
     "dev": "env-cmd -f ./.env nodemon src/server",
-    "reset-db": "npx prisma migrate reset --force && npx prisma generate",
-    "test": "NODE_ENV=test jest"
+
+    "reset": "env-cmd -f ./.env sh -c 'npx prisma migrate reset --force && npx prisma generate && npx prisma db push' && env-cmd -f ./.test.env sh -c 'npx prisma migrate reset --force && npx prisma generate && npx prisma db push' && clear",
+
+    "push": "env-cmd -f ./.env sh -c 'npx prisma db push' && env-cmd -f ./.test.env sh -c 'npx prisma db push' && clear",
+
+    "test": "NODE_ENV=test env-cmd -f ./.test.env vitest"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import chalk from 'chalk';
-import redis from './redis-client.js';
+import redis from '../config/redis-client.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
