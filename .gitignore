@@ -6,3 +6,4 @@ node_modules
 docs/
 test/
 vitest.config.js
+middlewares/auth.js
