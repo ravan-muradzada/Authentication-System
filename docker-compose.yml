@@ -34,14 +34,14 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
 
-  redis-cli:
-    image: redis:7
-    container_name: redis-cli
-    entrypoint: ["redis-cli", "-h", "redis"]
-    depends_on:
-      - redis
-    stdin_open: true
-    tty: true
+  # redis-cli:
+  #   image: redis:7
+  #   container_name: redis-cli
+  #   entrypoint: ["redis-cli", "-h", "redis"]
+  #   depends_on:
+  #     - redis
+  #   stdin_open: true
+  #   tty: true
 
 volumes:
   redis-data:

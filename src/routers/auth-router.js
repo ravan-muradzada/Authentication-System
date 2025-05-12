@@ -1,8 +1,8 @@
 import express from 'express';
 import * as authController from '../controllers/auth-controller.js';
 import validateRequestMiddleware from '../middlewares/validator.js';
+import loginFreezeMiddleware from '../middlewares/login-freeze.js';
 import passport from 'passport';
-import authLimit from '../middlewares/rateLimit.js';
 
 const router = new express.Router();
 
@@ -18,9 +18,9 @@ const jwtMiddleware = (req, res, next) => {
 
 
 // OTP sign up
-router.post('/sign-up', authLimit, validateRequestMiddleware, authController.signUp);
-router.post('/verify-otp', authLimit, validateRequestMiddleware, authController.verifyOtp);
-router.post('/add-other-credentials', jwtMiddleware, authController.otherCredentials);
+router.post('/auth/sign-up', validateRequestMiddleware, authController.signUp);
+router.post('/auth/verify-otp', validateRequestMiddleware, authController.verifyOtp);
+router.post('/protected/add-other-credentials', jwtMiddleware, authController.otherCredentials);
 
 // Sign up with Google
 router.get('/auth/google', 
@@ -31,23 +31,23 @@ router.get('/auth/google/callback',
     passport.authenticate('google', { session: false, failureMessage: true, failureRedirect: '/login-failed' }), authController.callbackOfGoogle
 );
 
-router.get('/login-failed', authController.loginFailed);
+router.get('/auth/login-failed', authController.loginFailed);
 
 // Log in manual
-router.post('/login', authLimit, validateRequestMiddleware, authController.loginManual);
-router.post('/verify-login', authLimit, validateRequestMiddleware, authController.verifyLogIn);
+router.post('/auth/login', validateRequestMiddleware, loginFreezeMiddleware, authController.loginManual);
+router.post('/auth/verify-login', validateRequestMiddleware, authController.verifyLogIn);
 
 // Refresh the tokens
-router.post('/refresh', authController.refresh);
+router.post('/protected/refresh', authController.refresh);
 
-router.get('/hello-world', jwtMiddleware, (req, res) => res.send('Hello World from protected route!'));
+router.get('/protected/protected-route-example', jwtMiddleware, (req, res) => res.send('Hello World from protected route!'));
 
-router.post('/logout', jwtMiddleware, authController.logout);
+router.post('/protected/logout', jwtMiddleware, authController.logout);
 
-router.patch('/change-password', jwtMiddleware, authController.changePassword);
+router.patch('/auth/change-password', jwtMiddleware, authController.changePassword);
 
-router.post('/forget-password', authLimit, authController.forgetPassword);
+router.post('/auth/forget-password', authController.forgetPassword);
 
-router.patch('/reset-password/:token', authLimit, authController.resetPassword);
+router.patch('/auth/reset-password/:token', authController.resetPassword);
 
 export default router;

@@ -15,11 +15,12 @@ export const signUp = async (req, res) => {
 
         // Generating and saving OTP
         const otpCode = otpGenerator.generate();
-        console.log('OTP Code: ', otpCode);
-        const otpKey = `otp:${email}`;
+        console.log('OTP Code in sign up controller: ', otpCode);
+        const otpKey = `otp_signup:${email}`;
         await redis.lPush(otpKey, otpCode);
         await redis.expire(otpKey, 300); // Set expiration time to 5 minutes
-
+        const otpCodeCheck = await redis.lIndex(`otp_signup:${email}`, 0);
+        console.log(`---------->Check contr: ${otpCodeCheck}`)
         // Sending OTP
         const subject = `OTP Verification to sign up`;
         const text = `Don't share!`;
@@ -52,7 +53,7 @@ export const verifyOtp = async (req, res) => {
         // Verifying the input otp 
         const { email, inputOtp } = req.body;
 
-        const otpKey = `otp:${email}`;
+        const otpKey = `otp_signup:${email}`;
         const allOtps = await redis.lRange(otpKey, 0, -1);
         
         if (!allOtps.includes(inputOtp)) {
@@ -200,6 +201,12 @@ export const loginManual = async (req, res) => {
 
         const isCorrectPassword = await bcrypt.compare(password, user.password);
         if (!isCorrectPassword) {
+            const key = `fail-in-login:${email}:${req.ip}`;
+            const attempts = await redis.incr(key);
+            if (attempts === 1) {
+                await redis.expire(key, 10*60);
+            }
+
             return res.status(400).json({
                 success: false,
                 message: 'Wrong in credentials!'
@@ -210,7 +217,7 @@ export const loginManual = async (req, res) => {
         // Generating and saving OTP
         const otpCode = otpGenerator.generate();
         console.log('OTP Code: ', otpCode);
-        const otpKey = `otp:${email}`;
+        const otpKey = `otp_login:${email}`;
         await redis.set(`userId:${email}`, user.id, { EX: 300 });
         await redis.lPush(otpKey, otpCode);
         await redis.expire(otpKey, 300); // Set expiration time to 5 minutes
@@ -237,7 +244,7 @@ export const loginManual = async (req, res) => {
 export const verifyLogIn = async (req, res) => {
     try {
         const { email, inputOtp } = req.body;
-        const otpKey = `otp:${email}`;
+        const otpKey = `otp_login:${email}`;
         const allOtps = await redis.lRange(otpKey, 0, -1);
 
         const checkExistenceOfOtp = allOtps.includes(inputOtp);
@@ -364,17 +371,37 @@ export const changePassword = async (req, res) => {
         const { userId } = req.user;
         const { newPassword } = req.body;
 
+        if (!newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'You need to send a new password'
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(newPassword, 8);
-        console.log(req.user.userId)        
+
+        const user = await prisma.user.findUnique({
+            where: {
+                id: parseInt(userId)
+            }
+        });
+
+        if (user.provider === 'google') {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot change the password, because you registered via Google!'
+            });
+        }
+
         const updatedUser = await prisma.user.update({
             where: {
-                id: parseInt(req.user.userId)
+                id: parseInt(userId)
             }, 
             data: {
                 password: hashedPassword
             }
         });
-
+        
         await handleTokens.removeRefreshTokensFromRedis(userId);
 
         res.status(200).json({
@@ -382,9 +409,9 @@ export const changePassword = async (req, res) => {
             message: 'Password changed successfully!'
         });
     } catch(e) {
-        res.status(400).json({
+        return res.status(400).json({
             success: false,
-            message: `Error happened while refreshing your password! ${e.message}`
+            message: `Error happened while changing your password! ${e.message}`
         });
     }
 }
@@ -403,6 +430,13 @@ export const forgetPassword = async (req, res) => {
             return res.status(404).json({
                 success: true,
                 message: 'User with this email not found!'
+            });
+        }
+
+        if (user.provider === 'google') {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot change the password, because you registered via Google!'
             });
         }
 

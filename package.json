@@ -7,18 +7,16 @@
   "scripts": {
     "start": "env-cmd -f ./.env node src/server",
     "dev": "env-cmd -f ./.env nodemon src/server",
-
     "reset": "env-cmd -f ./.env sh -c 'npx prisma migrate reset --force && npx prisma generate && npx prisma db push' && env-cmd -f ./.test.env sh -c 'npx prisma migrate reset --force && npx prisma generate && npx prisma db push' && clear",
-
     "push": "env-cmd -f ./.env sh -c 'npx prisma db push' && env-cmd -f ./.test.env sh -c 'npx prisma db push' && clear",
-
-    "test": "NODE_ENV=test env-cmd -f ./.test.env vitest"
+    "test": "NODE_ENV=test env-cmd -f ./.test.env vitest",
+    "test-db": "env-cmd -f .test.env npx prisma studio",
+    "prod-db": "env-cmd -f .env npx prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@jest/globals": "^29.7.0",
     "@prisma/client": "^6.6.0",
     "@sendgrid/mail": "^8.1.5",
     "bcrypt": "^5.1.1",
@@ -39,7 +37,6 @@
   },
   "devDependencies": {
     "prisma": "^6.7.0",
-    "redis-mock": "^0.56.3",
     "supertest": "^7.1.0",
     "vitest": "^3.1.3"
   }
