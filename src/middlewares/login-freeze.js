@@ -16,6 +16,10 @@ const loginFreezeMiddleware = async (req, res, next) => {
         next();
     } catch(e) {
         console.log(`Error happened in login freezing middleware: ${e.message}`);
+        res.status(400).json({
+            success: false,
+            message: `Something went wrong while login freezing! ${e.message}`
+        });
     }
 }
 

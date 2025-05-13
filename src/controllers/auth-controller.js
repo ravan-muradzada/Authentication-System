@@ -15,12 +15,11 @@ export const signUp = async (req, res) => {
 
         // Generating and saving OTP
         const otpCode = otpGenerator.generate();
-        console.log('OTP Code in sign up controller: ', otpCode);
         const otpKey = `otp_signup:${email}`;
         await redis.lPush(otpKey, otpCode);
         await redis.expire(otpKey, 300); // Set expiration time to 5 minutes
         const otpCodeCheck = await redis.lIndex(`otp_signup:${email}`, 0);
-        console.log(`---------->Check contr: ${otpCodeCheck}`)
+
         // Sending OTP
         const subject = `OTP Verification to sign up`;
         const text = `Don't share!`;
