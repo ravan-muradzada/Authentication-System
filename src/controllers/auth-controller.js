@@ -18,7 +18,6 @@ export const signUp = async (req, res) => {
         const otpKey = `otp_signup:${email}`;
         await redis.lPush(otpKey, otpCode);
         await redis.expire(otpKey, 300); // Set expiration time to 5 minutes
-        const otpCodeCheck = await redis.lIndex(`otp_signup:${email}`, 0);
 
         // Sending OTP
         const subject = `OTP Verification to sign up`;
@@ -92,7 +91,7 @@ export const verifyOtp = async (req, res) => {
             message: 'User has been created!',
             accessToken,
             redirect: '/add-other-credentials'
-        })
+        });
     } catch(e) {
         console.log(e.message);
         res.status(400).json({
@@ -488,6 +487,8 @@ export const resetPassword = async (req, res) => {
         });
 
         await redis.del(`reset:${token}`);
+        await handleTokens.removeRefreshTokensFromRedis(userId);
+
         res.status(200).json({
             success: true,
             message: 'Password reset successfully!'
